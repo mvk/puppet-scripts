@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # tested on 0.25
 
 usage () {
@@ -53,7 +53,7 @@ case $option in
 done
 
 # grab the non-getopts option
-shift $(($OPTIND - 1))
+shift $(( OPTIND - 1 ))
 target="${1-$(pwd)}"
 target="${target%/}"
 
@@ -65,18 +65,18 @@ else
   lister="ls -d1 $target/*"
 fi
 
-catalog_filelist=$(mktemp -q /tmp/$appname.XXXXXX)
-lister_filelist=$(mktemp -q /tmp/$appname.XXXXXX)
+catalog_filelist="$( mktemp -q "/tmp/$appname.XXXXXX" )"
+lister_filelist="$( mktemp -q "/tmp/$appname.XXXXXX" )"
 
 # better clean up
+# shellcheck  disable=SC2064
 trap "rm -f $catalog_filelist $lister_filelist" 0 1 2 15
 
 # get files puppet knows about - you might not need both of these.
 (
   grep -h "title: /" /var/lib/puppet/client_yaml/catalog/*.yaml | awk '{ print $NF }' ;
   sed -e '/"File\[/!d' -e 's/"File\[//' -e 's/\]"://' -e 's/ //g' < /var/lib/puppet/state/state.yaml
-) | sort > $catalog_filelist
+) | sort > "$catalog_filelist"
 
-$lister | sort > $lister_filelist
-
-$comm $catalog_filelist $lister_filelist
+$lister | sort > "$lister_filelist"
+$comm "$catalog_filelist" "$lister_filelist"
